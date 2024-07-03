@@ -1,0 +1,122 @@
+{
+  "displayName": "Wait Node",
+  "name": "wait-node",
+  "scope": "project",
+  "version": "0.1.0",
+  "description": "Wait node until all previous executions in pipeline cycle are done.",
+  "attributes": {
+    "Category": "Application",
+    "Hub": "Dataloop",
+    "Provider": "Dataloop",
+    "Deployed By": "Dataloop",
+    "License": "MIT",
+    "Application Type": "Pipeline Node"
+  },
+  "codebase": {
+    "type": "git",
+    "gitUrl": "https://github.com/dataloop-ai-apps/pipeline-utils.git",
+    "gitTag": "0.1.0"
+  },
+  "components": {
+    "pipelineNodes": [
+      {
+        "invoke": {
+          "type": "function",
+          "namespace": "wait-node.wait-node.wait_for_cycle"
+        },
+        "categories": [
+          "data"
+        ],
+        "name": "Wait Node",
+        "displayName": "Wait",
+        "description": "Wait node stops the pipeline cycle from continuing until all previous executions in pipeline cycle are done.",
+        "scope": "project",
+        "configuration": {
+          "fields": [
+            {
+              "name": "name",
+              "title": "Node Name",
+              "props": {
+                "title": true,
+                "type": "string",
+                "default": "Wait",
+                "required": true,
+                "placeholder": "Insert node name"
+              },
+              "rules": [
+                {
+                  "type": "required",
+                  "effect": "error"
+                }
+              ],
+              "widget": "dl-input"
+            },
+            {
+              "name": "returnParent",
+              "title": "Return Parent",
+              "props": {
+                "title": "Return Parent",
+                "type": "bool",
+                "default": true,
+                "required": true
+              },
+              "rules": [
+                {
+                  "type": "required",
+                  "effect": "error"
+                }
+              ],
+              "widget": "dl-checkbox"
+            }
+          ]
+        }
+      }
+    ],
+    "modules": [
+      {
+        "name": "wait-node",
+        "entryPoint": "wait_node.py",
+        "className": "ServiceRunner",
+        "functions": [
+          {
+            "name": "wait_for_cycle",
+            "input": [
+              {
+                "type": "Item",
+                "name": "item"
+              }
+            ],
+            "output": [
+              {
+                "type": "Item",
+                "name": "item",
+                "actions": [
+                  "continue",
+                  "wait"
+                ]
+              }
+            ],
+            "displayIcon": "icon-dl-loading"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "name": "wait-node",
+        "moduleName": "wait-node",
+        "runtime": {
+          "podType": "regular-xs",
+          "runnerImage": "dataloopai/dtlpy-agent:cpu.py3.8.opencv4.7",
+          "concurrency": 1,
+          "autoscaler": {
+            "minReplicas": 0,
+            "maxReplicas": 1,
+            "queueLength": 10
+          }
+        },
+        "operation": "none"
+      }
+    ]
+  }
+}
