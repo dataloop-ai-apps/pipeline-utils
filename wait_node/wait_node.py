@@ -6,11 +6,9 @@ logger = logging.getLogger(name='wait_node')
 
 class ServiceRunner(dl.BaseServiceRunner):
     def __init__(self):
-        super().__init__()
         self.cycle_status_dict = {}
 
-    @staticmethod
-    def get_previous_nodes(pipeline, start_node_id, previous_nodes):
+    def get_previous_nodes(self, pipeline, start_node_id, previous_nodes):
         """
         Recursively collects previous nodes in the pipeline and stores them in previous_nodes.
         """
@@ -19,7 +17,7 @@ class ServiceRunner(dl.BaseServiceRunner):
             if connection.target.node_id in start_node_id:
                 if connection.source.node_id not in previous_nodes:
                     previous_nodes[connection.source.node_id] = {}
-                    ServiceRunner.get_previous_nodes(pipeline, connection.source.node_id, previous_nodes)
+                    self.get_previous_nodes(pipeline, connection.source.node_id, previous_nodes)
 
     def wait_for_cycle(self, item: dl.Item, context: dl.Context, progress: dl.Progress):
         """
