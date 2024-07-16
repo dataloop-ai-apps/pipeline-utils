@@ -1,7 +1,7 @@
 {
   "displayName": "Wait Node",
   "name": "wait-node",
-  "scope": "project",
+  "scope": "public",
   "version": "0.1.0",
   "description": "Wait node until all previous executions in pipeline cycle are done.",
   "attributes": {
@@ -53,11 +53,11 @@
             },
             {
               "name": "returnParent",
-              "title": "Return Parent",
+              "title": "Return Parent Item",
               "props": {
-                "title": "Return Parent",
+                "title": "Return Parent Item",
                 "type": "bool",
-                "default": true,
+                "default": false,
                 "required": true
               },
               "rules": [
@@ -96,7 +96,7 @@
                 ]
               }
             ],
-            "displayIcon": "icon-dl-loading"
+            "displayIcon": "icon-dl-hourglass"
           }
         ]
       }

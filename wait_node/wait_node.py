@@ -23,6 +23,19 @@ class ServiceRunner(dl.BaseServiceRunner):
         """
         Waits for the cycle to complete based on the status of previous nodes in the pipeline execution.
         """
+
+        node_context = context.node
+        return_parent = node_context.metdata['customNodeConfig'].get('returnParent', False)
+        if return_parent is True:
+            parent_item_id = item.metadata.get('user', dict()).get('parentItemId', '')
+            try:  # try to get parent item
+                parent_item = item.dataset.items.get(item_id=parent_item_id)
+            except dl.exceptions.NotFound:
+                logging.error(f'Parent item not found: {parent_item_id}, returning item itself.')
+                parent_item = item
+        else:
+            parent_item = item
+
         latest_status = 'continue'
         node_id = context.node_id
         pipeline_execution_id = context.pipeline_execution_id
@@ -58,4 +71,4 @@ class ServiceRunner(dl.BaseServiceRunner):
             latest_status = 'wait'
 
         progress.update(action=latest_status)
-        return item
+        return parent_item
