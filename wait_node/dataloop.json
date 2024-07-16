@@ -50,23 +50,6 @@
                 }
               ],
               "widget": "dl-input"
-            },
-            {
-              "name": "returnParent",
-              "title": "Return Parent Item",
-              "props": {
-                "title": "Return Parent Item",
-                "type": "bool",
-                "default": false,
-                "required": true
-              },
-              "rules": [
-                {
-                  "type": "required",
-                  "effect": "error"
-                }
-              ],
-              "widget": "dl-checkbox"
             }
           ]
         }
