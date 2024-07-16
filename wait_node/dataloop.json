@@ -50,6 +50,15 @@
                 }
               ],
               "widget": "dl-input"
+            },
+            {
+              "name": "returnParent",
+              "title": "Return Parent Item",
+              "props": {
+                "type": "boolean",
+                "default": false
+              },
+              "widget": "dl-checkbox"
             }
           ]
         }
@@ -79,7 +88,7 @@
                 ]
               }
             ],
-            "displayIcon": "icon-dl-avatar"
+            "displayIcon": "icon-dl-hourglass"
           }
         ]
       }
