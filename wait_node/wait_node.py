@@ -25,7 +25,7 @@ class ServiceRunner(dl.BaseServiceRunner):
         """
 
         node_context = context.node
-        return_parent = node_context.metdata['customNodeConfig'].get('returnParent', False)
+        return_parent = node_context.metadata.get('customNodeConfig', dict()).get('returnParent', False)
         if return_parent is True:
             parent_item_id = item.metadata.get('user', dict()).get('parentItemId', '')
             try:  # try to get parent item
