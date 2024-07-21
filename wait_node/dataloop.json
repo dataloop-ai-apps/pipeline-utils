@@ -2,7 +2,7 @@
   "displayName": "Wait Node",
   "name": "wait-node",
   "scope": "public",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Wait node until all previous executions in pipeline cycle are done.",
   "attributes": {
     "Category": "Application",
@@ -17,7 +17,7 @@
   "codebase": {
     "type": "git",
     "gitUrl": "https://github.com/dataloop-ai-apps/pipeline-utils.git",
-    "gitTag": "0.1.1"
+    "gitTag": "0.1.2"
   },
   "components": {
     "pipelineNodes": [
