@@ -6,11 +6,13 @@
   "description": "Wait node until all previous executions in pipeline cycle are done.",
   "attributes": {
     "Category": "Application",
-    "Hub": "Dataloop",
     "Provider": "Dataloop",
     "Deployed By": "Dataloop",
     "License": "MIT",
-    "Application Type": "Pipeline Node"
+    "Application Type": "Pipeline Node",
+    "Media Type": [
+      "All Media Types"
+    ]
   },
   "codebase": {
     "type": "git",
