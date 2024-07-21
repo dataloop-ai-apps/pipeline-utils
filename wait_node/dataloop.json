@@ -1,16 +1,18 @@
 {
   "displayName": "Wait Node",
   "name": "wait-node",
-  "scope": "project",
+  "scope": "public",
   "version": "0.1.0",
   "description": "Wait node until all previous executions in pipeline cycle are done.",
   "attributes": {
     "Category": "Application",
-    "Hub": "Dataloop",
     "Provider": "Dataloop",
     "Deployed By": "Dataloop",
     "License": "MIT",
-    "Application Type": "Pipeline Node"
+    "Application Type": "Pipeline Node",
+    "Media Type": [
+      "All Media Types"
+    ]
   },
   "codebase": {
     "type": "git",
@@ -53,19 +55,11 @@
             },
             {
               "name": "returnParent",
-              "title": "Return Parent",
+              "title": "Return Parent Item",
               "props": {
-                "title": "Return Parent",
-                "type": "bool",
-                "default": true,
-                "required": true
+                "type": "boolean",
+                "default": false
               },
-              "rules": [
-                {
-                  "type": "required",
-                  "effect": "error"
-                }
-              ],
               "widget": "dl-checkbox"
             }
           ]
@@ -96,7 +90,7 @@
                 ]
               }
             ],
-            "displayIcon": "icon-dl-loading"
+            "displayIcon": "icon-dl-hourglass"
           }
         ]
       }
