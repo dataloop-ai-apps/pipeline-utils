@@ -69,7 +69,7 @@
     "modules": [
       {
         "name": "wait-node",
-        "entryPoint": "wait_node.py",
+        "entryPoint": "wait_node/wait_node.py",
         "className": "ServiceRunner",
         "functions": [
           {
