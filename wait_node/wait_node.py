@@ -57,11 +57,21 @@ class ServiceRunner(dl.BaseServiceRunner):
 
             # Collect previous nodes
             self.get_previous_nodes(pipeline=pipeline, start_node_id=node_id, previous_nodes=previous_nodes)
-
+            executions = response.json().get('executions', dict())
+            tasks = response.json().get('taskNodeItemCount', dict())
             for node in nodes:
                 if node.get('id', None) in list(previous_nodes.keys()):
                     if node.get('status') == 'success':
                         continue
+                    elif node.get('status') == 'pending':
+                        # If status is pending in task, check if there are items in the task
+                        if node.get('type') == dl.PipelineNodeType.TASK:
+                            if node.get('id') not in list(tasks.keys()):
+                                continue
+                        else:
+                            # if status is pending in other nodes, check if there are executions for the node
+                            if node.get('id') not in list(executions.keys()):
+                                continue
                     else:
                         latest_status = 'wait'
                         break
@@ -72,3 +82,13 @@ class ServiceRunner(dl.BaseServiceRunner):
 
         progress.update(action=latest_status)
         return parent_item
+
+
+if __name__ == '__main__':
+    context = dl.Context()
+    context.pipeline_id = ''
+    context.node_id = ''
+    context.pipeline_execution_id = ''
+    _item = dl.items.get(item_id='')
+    service_runner = ServiceRunner()
+    service_runner.wait_for_cycle(item=_item, context=context, progress=dl.Progress())
