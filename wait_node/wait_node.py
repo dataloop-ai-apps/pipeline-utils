@@ -19,6 +19,21 @@ class ServiceRunner(dl.BaseServiceRunner):
                     previous_nodes[connection.source.node_id] = {}
                     self.get_previous_nodes(pipeline, connection.source.node_id, previous_nodes)
 
+    @staticmethod
+    def get_node_executions_status(node_id, pipeline_execution_id):
+        """
+        Fetches the status of the node execution.
+        """
+        filters = dl.Filters(resource=dl.FiltersResource.EXECUTION)
+        filters.add(field='pipeline.executionId', values=pipeline_execution_id)
+        filters.add(field='pipeline.nodeId', values=node_id)
+        executions = dl.executions.list(filters=filters)
+        for execution in executions.all():
+            execution: dl.Execution
+            if not execution.latest_status.get('status') == 'success':
+                return False
+        return True
+
     def wait_for_cycle(self, item: dl.Item, context: dl.Context, progress: dl.Progress):
         """
         Waits for the cycle to complete based on the status of previous nodes in the pipeline execution.
@@ -60,7 +75,8 @@ class ServiceRunner(dl.BaseServiceRunner):
 
             for node in nodes:
                 if node.get('id', None) in list(previous_nodes.keys()):
-                    if node.get('status') == 'success':
+                    if self.get_node_executions_status(node_id=node.get('id'),
+                                                       pipeline_execution_id=pipeline_execution_id) is True:
                         continue
                     else:
                         latest_status = 'wait'
@@ -72,3 +88,14 @@ class ServiceRunner(dl.BaseServiceRunner):
 
         progress.update(action=latest_status)
         return parent_item
+
+
+if __name__ == '__main__':
+    # Run Locally
+    context = dl.Context()
+    context.pipeline_id = ''
+    context.node_id = ''
+    context.pipeline_execution_id = ''
+    _item = dl.items.get(item_id='')
+    service_runner = ServiceRunner()
+    service_runner.wait_for_cycle(item=_item, context=context, progress=dl.Progress())
