@@ -22,7 +22,8 @@ class ServiceRunner(dl.BaseServiceRunner):
     @staticmethod
     def get_node_executions_status(node_id, pipeline_execution_id):
         """
-        Fetches the status of the node execution.
+        Get all executions that happened on the node from current cycle,
+         if not all executions are in status success return False to stop pipeline.
         """
         filters = dl.Filters(resource=dl.FiltersResource.EXECUTION)
         filters.add(field='pipeline.executionId', values=pipeline_execution_id)
@@ -30,7 +31,7 @@ class ServiceRunner(dl.BaseServiceRunner):
         executions = dl.executions.list(filters=filters)
         for execution in executions.all():
             execution: dl.Execution
-            if not execution.latest_status.get('status') == 'success':
+            if execution.latest_status.get('status') != 'success':
                 return False
         return True
 
@@ -88,6 +89,9 @@ class ServiceRunner(dl.BaseServiceRunner):
 
         progress.update(action=latest_status)
         return parent_item
+
+
+
 
 
 if __name__ == '__main__':
