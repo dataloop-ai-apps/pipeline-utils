@@ -31,6 +31,7 @@ class ServiceRunner(dl.BaseServiceRunner):
         executions = dl.executions.list(filters=filters)
         for execution in executions.all():
             execution: dl.Execution
+            # If any of the executions is NOT in success status, return False
             if execution.latest_status.get('status') != 'success':
                 return False
         return True
