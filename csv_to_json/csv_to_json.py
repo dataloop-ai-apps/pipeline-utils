@@ -12,6 +12,7 @@ class ServiceRunner(dl.BaseServiceRunner):
 
     @staticmethod
     def csv_to_json(item: dl.Item):
+        logger.info(f"Starting CSV to JSON conversion for item id: {item.id}")
 
         if not item.mimetype == "text/csv":
             raise ValueError(f"Item id : {item.id} is not a csv file! This functions excepts csv only")
@@ -20,7 +21,10 @@ class ServiceRunner(dl.BaseServiceRunner):
         item_name = os.path.splitext(item.name)[0]
         # Download item
         with tempfile.TemporaryDirectory() as temp_dir:
+            logger.info(f"Downloading item to temporary directory: {temp_dir}")
             item_local_path = item.download(local_path=temp_dir)
+            logger.info(f"Item downloaded to: {item_local_path}")
+
             with open(item_local_path, "r", encoding="utf-8") as csv_file:
                 csv_reader = csv.DictReader(csv_file)
                 for idx, row in enumerate(csv_reader):
@@ -29,7 +33,9 @@ class ServiceRunner(dl.BaseServiceRunner):
                     with open(new_json_file, "w", encoding="utf-8") as json_file:
                         json.dump(row, json_file, indent=4, ensure_ascii=False)
                     jsons_path_list.append(new_json_file)
+                    logger.info(f"JSON file created: {new_json_file}")
 
+            logger.info("Uploading JSON files to dataset")
             uploaded_items = item.dataset.items.upload(
                 local_path=jsons_path_list,
                 remote_path=f"jsons/{item_name}",
