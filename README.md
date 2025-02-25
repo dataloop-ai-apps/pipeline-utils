@@ -7,6 +7,7 @@ The pipeline utils repository contains custom node applications that help simpli
 ### Applications: 
 
 * [Wait Node](wait_node/README.md) - A node that can be put in any location in the pipeline, and it will wait for all previous executions to finish before continuing.
+* [CSV to JSON](csv_to_json/README.md) - An application to convert CSV files into JSON format.
 
 ## Contributions, Bugs and Issues - How to Contribute
 

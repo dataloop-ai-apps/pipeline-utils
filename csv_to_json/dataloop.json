@@ -1,0 +1,140 @@
+{
+    "displayName": "Csv to Json",
+    "name": "csv_to_json",
+    "scope": "public",
+    "version": "0.1.3",
+    "description": "An application for converting CSV to Json items. Includes a trigger for when a CSV item is uploaded to a dataset in the project.",
+    "attributes": {
+      "Category": "Application",
+      "Provider": "Dataloop",
+      "Deployed By": "Dataloop",
+      "License": "Apache 2.0",
+      "Application Type": [
+        "Pipeline Node"
+      ],
+      "Media Type": [
+        "Text"
+      ]
+    },
+    "codebase": {
+        "type": "git",
+        "gitUrl": "https://github.com/dataloop-ai-apps/pipeline-utils.git",
+        "gitTag": "0.1.3"
+      },
+    "components": {
+      "services": [
+        {
+          "name": "csv-to-json-v2",
+          "moduleName": "csv_to_json_v2",
+          "runtime": {
+            "podType": "regular-xs",
+            "runnerImage": "gcr.io/viewo-g/piper/agent/runner/apps/document-preprocessing:0.1.3",
+            "concurrency": 10,
+            "autoscaler": {
+              "minReplicas": 0,
+              "maxReplicas": 2,
+              "queueLength": 10
+            }
+          }
+        }
+      ],
+      "pipelineNodes": [
+        {
+          "invoke": {
+            "type": "function",
+            "namespace": "csv-to-json-v2.csv_to_json_v2.csv_to_json"
+          },
+          "name": "csv_to_json",
+          "categories": [
+            "text-utils"
+          ],
+          "displayName": "CSV to JSON",
+          "description": "Converting CSV to JSON items",
+          "scope": "project",
+          "configuration": {
+            "fields": [
+              {
+                "name": "name",
+                "title": "Node Name",
+                "props": {
+                  "title": true,
+                  "type": "string",
+                  "default": "CSV-to-JSON",
+                  "required": true,
+                  "placeholder": "Insert node name"
+                },
+                "rules": [
+                  {
+                    "type": "required",
+                    "effect": "error"
+                  }
+                ],
+                "widget": "dl-input"
+              }
+            ]
+          }
+        }
+      ],
+      "modules": [
+        {
+          "name": "csv_to_json_v2",
+          "computeConfig": "csv-to-json-v2",
+          "entryPoint": "csv_to_json/csv_to_json.py",
+          "className": "ServiceRunner",
+          "initInputs": [],
+          "functions": [
+            {
+              "name": "csv_to_json",
+              "input": [
+                {
+                  "type": "Item",
+                  "name": "item"
+                }
+              ],
+              "output": [
+                {
+                  "type": "Item[]",
+                  "name": "items"
+                }
+              ],
+              "displayIcon": "icon-dl-overview",
+              "displayName": "CSV to JSON"
+            }
+          ]
+        }
+      ],
+      "triggers": [
+        {
+          "name": "csv-to-json-on-item",
+          "active": true,
+          "type": "Event",
+          "namespace": "services.csv-to-json-on-item",
+          "spec": {
+            "filter": {
+              "$and": [
+                {
+                  "metadata.system.mimetype": "text/csv"
+                },
+                {
+                  "hidden": false
+                },
+                {
+                  "type": "file"
+                }
+              ]
+            },
+            "executionMode": "Always",
+            "resource": "Item",
+            "actions": [
+              "Created"
+            ],
+            "input": {},
+            "operation": {
+              "type": "function",
+              "functionName": "csv_to_json"
+            }
+          }
+        }
+      ]
+    }
+  }
