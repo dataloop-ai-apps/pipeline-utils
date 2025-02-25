@@ -1,8 +1,8 @@
+import pandas as pd
 import dtlpy as dl
 import tempfile
 import logging
 import json
-import csv
 import os
 
 logger = logging.getLogger(name="csv_to_json")
@@ -17,40 +17,38 @@ class ServiceRunner(dl.BaseServiceRunner):
         if not item.mimetype == "text/csv":
             raise ValueError(f"Item id : {item.id} is not a csv file! This functions excepts csv only")
 
-        jsons_path_list = []
         item_name = os.path.splitext(item.name)[0]
         # Download item
         with tempfile.TemporaryDirectory() as temp_dir:
             logger.info(f"Downloading item to temporary directory: {temp_dir}")
             item_local_path = item.download(local_path=temp_dir)
             logger.info(f"Item downloaded to: {item_local_path}")
-
+            dir_path = os.path.join(temp_dir, item.id)
+            os.makedirs(dir_path, exist_ok=True)
             with open(item_local_path, "r", encoding="utf-8") as csv_file:
-                csv_reader = csv.DictReader(csv_file)
-                for idx, row in enumerate(csv_reader):
-                    print(row)
-                    new_json_file = os.path.join(temp_dir, f"{item_name}_{idx}.json")
+                df = pd.read_csv(csv_file)
+                for idx, row in df.iterrows():
+                    new_json_file = os.path.join(dir_path, f"{item_name}_{idx}.json")
                     with open(new_json_file, "w", encoding="utf-8") as json_file:
-                        json.dump(row, json_file, indent=4, ensure_ascii=False)
-                    jsons_path_list.append(new_json_file)
-                    logger.info(f"JSON file created: {new_json_file}")
+                        json.dump(row.to_dict(), json_file, indent=4, ensure_ascii=False)
 
             logger.info("Uploading JSON files to dataset")
             uploaded_items = item.dataset.items.upload(
-                local_path=jsons_path_list,
-                remote_path=f"jsons/{item_name}",
-                item_metadata={"user": {"original_item_id": item.id}},
+                local_path=os.path.join(dir_path, "*"),
+                remote_path=f"{item.dir}",
+                item_metadata={"user": {"originalItemId": item.id}},
                 overwrite=True,
+                return_as_list=True,
+                raise_on_error=True
             )
-
-        if uploaded_items is None:
-            raise dl.PlatformException("No items was uploaded!")
-        elif isinstance(uploaded_items, dl.Item):
-            uploaded_items = [uploaded_items]
-        else:
-            uploaded_items = [uploaded_item for uploaded_item in uploaded_items]
-
         return uploaded_items
+    
+    def extract_dataset(self, dataset: dl.Dataset):
+        logger.info(f"Extracting dataset: {dataset.name}")
+        filters = dl.Filters()
+        filters.add(field="metadata.system.mimetype", values="text/csv")
+        for item in dataset.items.list(filters=filters):
+            self.csv_to_json(item=item)
 
 
 if __name__ == "__main__":
