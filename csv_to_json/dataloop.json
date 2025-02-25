@@ -107,7 +107,7 @@
           "name": "csv-to-json-on-item",
           "active": true,
           "type": "Event",
-          "namespace": "services.csv-to-json-on-item",
+          "namespace": "services.csv-to-json-v2",
           "spec": {
             "filter": {
               "$and": [
