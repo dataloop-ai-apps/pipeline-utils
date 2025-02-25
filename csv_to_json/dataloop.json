@@ -78,7 +78,6 @@
       "modules": [
         {
           "name": "csv_to_json_v2",
-          "computeConfig": "csv-to-json-v2",
           "entryPoint": "csv_to_json/csv_to_json.py",
           "className": "ServiceRunner",
           "initInputs": [],
