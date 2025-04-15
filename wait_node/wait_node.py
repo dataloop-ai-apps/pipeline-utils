@@ -65,7 +65,7 @@ class ServiceRunner(dl.BaseServiceRunner):
         )
 
         # Get current cycle status
-        cycle_status = self.cycle_status_dict.get(pipeline_execution_id, 'wait')
+        cycle_status = self.cycle_status_dict.get(f"{pipeline_execution_id}_{node_id}", 'wait')
 
         if success and not cycle_status == 'continue':
             nodes = response.json().get('nodes', list())
@@ -84,7 +84,7 @@ class ServiceRunner(dl.BaseServiceRunner):
                         latest_status = 'wait'
                         break
 
-            self.cycle_status_dict[pipeline_execution_id] = latest_status
+            self.cycle_status_dict[f"{pipeline_execution_id}_{node_id}"] = latest_status
         else:
             latest_status = 'wait'
 
@@ -103,4 +103,5 @@ if __name__ == '__main__':
     context.pipeline_execution_id = ''
     _item = dl.items.get(item_id='')
     service_runner = ServiceRunner()
+    .
     service_runner.wait_for_cycle(item=_item, context=context, progress=dl.Progress())
