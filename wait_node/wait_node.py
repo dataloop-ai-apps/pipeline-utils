@@ -103,5 +103,4 @@ if __name__ == '__main__':
     context.pipeline_execution_id = ''
     _item = dl.items.get(item_id='')
     service_runner = ServiceRunner()
-    .
     service_runner.wait_for_cycle(item=_item, context=context, progress=dl.Progress())
