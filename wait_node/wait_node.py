@@ -14,7 +14,7 @@ class ServiceRunner(dl.BaseServiceRunner):
         """
         for connection in pipeline.connections:
             connection: dl.PipelineConnection
-            if connection.target.node_id in start_node_id:
+            if connection.target.node_id == start_node_id:
                 if connection.source.node_id not in previous_nodes:
                     previous_nodes[connection.source.node_id] = {}
                     self.get_previous_nodes(pipeline, connection.source.node_id, previous_nodes)
@@ -53,10 +53,17 @@ class ServiceRunner(dl.BaseServiceRunner):
         else:
             parent_item = item
 
-        latest_status = 'continue'
         node_id = context.node_id
         pipeline_execution_id = context.pipeline_execution_id
         pipeline_id = context.pipeline_id
+        cache_key = f"{pipeline_execution_id}_{node_id}"
+
+        # If we already determined all previous nodes completed for this
+        # pipeline execution + node, let subsequent items through immediately.
+        cycle_status = self.cycle_status_dict.get(cache_key, 'wait')
+        if cycle_status == 'continue':
+            progress.update(action='continue')
+            return parent_item
 
         # Fetch pipeline execution status
         success, response = dl.client_api.gen_request(
@@ -64,10 +71,8 @@ class ServiceRunner(dl.BaseServiceRunner):
             path=f"/pipelines/{pipeline_id}/executions/{pipeline_execution_id}"
         )
 
-        # Get current cycle status
-        cycle_status = self.cycle_status_dict.get(f"{pipeline_execution_id}_{node_id}", 'wait')
-
-        if success and not cycle_status == 'continue':
+        latest_status = 'wait'
+        if success:
             nodes = response.json().get('nodes', list())
             previous_nodes = dict()
             pipeline = context.pipeline
@@ -75,19 +80,20 @@ class ServiceRunner(dl.BaseServiceRunner):
             # Collect previous nodes
             self.get_previous_nodes(pipeline=pipeline, start_node_id=node_id, previous_nodes=previous_nodes)
 
+            # Assume all done until proven otherwise
+            all_done = True
             for node in nodes:
                 if node.get('id', None) in list(previous_nodes.keys()):
-                    if self.get_node_executions_status(node_id=node.get('id'),
-                                                       pipeline_execution_id=pipeline_execution_id) is True:
-                        continue
-                    else:
-                        latest_status = 'wait'
+                    if not self.get_node_executions_status(node_id=node.get('id'),
+                                                          pipeline_execution_id=pipeline_execution_id):
+                        all_done = False
                         break
 
-            self.cycle_status_dict[f"{pipeline_execution_id}_{node_id}"] = latest_status
-        else:
-            latest_status = 'wait'
+            if all_done:
+                latest_status = 'continue'
 
+        # Cache the result so subsequent items skip the check once predecessors are done
+        self.cycle_status_dict[cache_key] = latest_status
         progress.update(action=latest_status)
         return parent_item
 
