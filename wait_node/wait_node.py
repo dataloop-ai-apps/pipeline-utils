@@ -81,14 +81,14 @@ class ServiceRunner(dl.BaseServiceRunner):
                     success, execution = self.get_node_executions_status(node_id=node.get('id'),
                                                        pipeline_execution_id=pipeline_execution_id)
                     if success:
-                        logger.info(f'Node {node.get('id')} has all executions in success status, Checking next node...')
+                        logger.info(f"Node {node.get('id')} has all executions in success status, Checking next node...")
                         continue
                     else:
                         latest_status = 'wait'
                         if execution is not None:
-                            logger.info(f'Node {node.get('id')} has executions in not success status, execution: {execution.id}, Stopping pipeline...')
+                            logger.info(f"Node {node.get('id')} has executions in not success status, execution: {execution.id}, Stopping pipeline...")
                         else:
-                            logger.info(f'Node {node.get('id')} has executions in not success status, Stopping pipeline...')
+                            logger.info(f"Node {node.get('id')} has executions in not success status, Stopping pipeline...")
                         break
 
             self.cycle_status_dict[f"{pipeline_execution_id}_{node_id}"] = latest_status
