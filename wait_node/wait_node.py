@@ -1,5 +1,6 @@
 import dtlpy as dl
 import logging
+import time
 
 logger = logging.getLogger(name='wait_node')
 
@@ -33,14 +34,14 @@ class ServiceRunner(dl.BaseServiceRunner):
             execution: dl.Execution
             # If any of the executions is NOT in success status, return False
             if execution.latest_status.get('status') != 'success':
-                return False
-        return True
+                return False, execution
+        return True, None
 
     def wait_for_cycle(self, item: dl.Item, context: dl.Context, progress: dl.Progress):
         """
         Waits for the cycle to complete based on the status of previous nodes in the pipeline execution.
         """
-
+        time.sleep(1)
         node_context = context.node
         return_parent = node_context.metadata.get('customNodeConfig', dict()).get('returnParent', False)
         if return_parent is True:
@@ -77,18 +78,27 @@ class ServiceRunner(dl.BaseServiceRunner):
 
             for node in nodes:
                 if node.get('id', None) in list(previous_nodes.keys()):
-                    if self.get_node_executions_status(node_id=node.get('id'),
-                                                       pipeline_execution_id=pipeline_execution_id) is True:
+                    success, execution = self.get_node_executions_status(node_id=node.get('id'),
+                                                       pipeline_execution_id=pipeline_execution_id)
+                    if success:
+                        logger.info(f'Node {node.get('id')} has all executions in success status, Checking next node...')
                         continue
                     else:
                         latest_status = 'wait'
+                        if execution is not None:
+                            logger.info(f'Node {node.get('id')} has executions in not success status, execution: {execution.id}, Stopping pipeline...')
+                        else:
+                            logger.info(f'Node {node.get('id')} has executions in not success status, Stopping pipeline...')
                         break
 
             self.cycle_status_dict[f"{pipeline_execution_id}_{node_id}"] = latest_status
+            logger.info(f'Latest status set to: {latest_status}, cycle status for {pipeline_execution_id}_{node_id}: {cycle_status}')
         else:
             latest_status = 'wait'
+            logger.info(f'Latest set to status: {latest_status}, cycle status for {pipeline_execution_id}_{node_id}: {cycle_status}')
 
         progress.update(action=latest_status)
+        logger.info(f'Progress updated to: {latest_status}')
         return parent_item
 
 
