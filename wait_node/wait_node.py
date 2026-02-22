@@ -1,6 +1,6 @@
-import dtlpy as dl
 import logging
 import time
+import dtlpy as dl
 
 logger = logging.getLogger(name='wait_node')
 
@@ -88,6 +88,7 @@ class ServiceRunner(dl.BaseServiceRunner):
                         latest_status = 'wait'
                         if execution is not None:
                             logger.info(f"Node {node.get('id')} has executions in not success status, execution: {execution.id}, Stopping pipeline...")
+                            logger.info(f"Execution details: {execution.to_json()}, execution Output: {execution.output}")
                         else:
                             logger.info(f"Node {node.get('id')} has executions in not success status, Stopping pipeline...")
                         break
