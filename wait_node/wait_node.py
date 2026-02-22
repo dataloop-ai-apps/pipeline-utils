@@ -1,13 +1,22 @@
 import logging
+import threading
 import time
 import dtlpy as dl
 
 logger = logging.getLogger(name='wait_node')
 
+# Statuses that indicate the execution is done (no more updates expected)
+FINAL_STATUSES = {'success', 'failed'}
+
+# Polling: 4 seconds between polls, max 4 retries (5 attempts total)
+POLL_INTERVAL_SEC = 4
+POLL_MAX_RETRIES = 4
+
 
 class ServiceRunner(dl.BaseServiceRunner):
     def __init__(self):
         self.cycle_status_dict = {}
+        self._state_lock = threading.Lock()
 
     def get_previous_nodes(self, pipeline, start_node_id, previous_nodes):
         """
@@ -23,8 +32,11 @@ class ServiceRunner(dl.BaseServiceRunner):
     @staticmethod
     def get_node_executions_status(node_id, pipeline_execution_id):
         """
-        Get all executions that happened on the node from current cycle,
-         if not all executions are in status success return False to stop pipeline.
+        Get all executions that happened on the node from current cycle.
+        Returns:
+            (True, None): all executions in success (final).
+            (False, execution): at least one execution failed (final).
+            ('pending', execution): at least one execution has non-final status (e.g. in_progress).
         """
         filters = dl.Filters(resource=dl.FiltersResource.EXECUTION)
         filters.add(field='pipeline.executionId', values=pipeline_execution_id)
@@ -32,17 +44,18 @@ class ServiceRunner(dl.BaseServiceRunner):
         executions = dl.executions.list(filters=filters)
         for execution in executions.all():
             execution: dl.Execution
-            # If any of the executions is NOT in success status, return False
-            if execution.latest_status.get('status') != 'success':
+            status = execution.latest_status.get('status')
+            if status not in FINAL_STATUSES:
+                return 'pending', execution
+            if status == 'failed':
                 return False, execution
         return True, None
 
     def wait_for_cycle(self, item: dl.Item, context: dl.Context, progress: dl.Progress):
         """
         Waits for the cycle to complete based on the status of previous nodes in the pipeline execution.
+        Polls until executions have final status (success/failed), 4s between polls, max 4 retries.
         """
-        # NOTE: Wait for system execution statuses to update
-        time.sleep(10)
         node_context = context.node
         return_parent = node_context.metadata.get('customNodeConfig', dict()).get('returnParent', False)
         if return_parent is True:
@@ -66,8 +79,9 @@ class ServiceRunner(dl.BaseServiceRunner):
             path=f"/pipelines/{pipeline_id}/executions/{pipeline_execution_id}"
         )
 
-        # Get current cycle status
-        cycle_status = self.cycle_status_dict.get(f"{pipeline_execution_id}_{node_id}", 'wait')
+        # Get current cycle status (locked)
+        with self._state_lock:
+            cycle_status = self.cycle_status_dict.get(f"{pipeline_execution_id}_{node_id}", 'wait')
 
         if success and not cycle_status == 'continue':
             nodes = response.json().get('nodes', list())
@@ -78,22 +92,45 @@ class ServiceRunner(dl.BaseServiceRunner):
             self.get_previous_nodes(pipeline=pipeline, start_node_id=node_id, previous_nodes=previous_nodes)
 
             for node in nodes:
-                if node.get('id', None) in list(previous_nodes.keys()):
-                    success, execution = self.get_node_executions_status(node_id=node.get('id'),
-                                                       pipeline_execution_id=pipeline_execution_id)
-                    if success:
-                        logger.info(f"Node {node.get('id')} has all executions in success status, Checking next node...")
-                        continue
-                    else:
-                        latest_status = 'wait'
-                        if execution is not None:
-                            logger.info(f"Node {node.get('id')} has executions in not success status, execution: {execution.id}, Stopping pipeline...")
-                            logger.info(f"Execution details: {execution.to_json()}, execution Output: {execution.output}")
-                        else:
-                            logger.info(f"Node {node.get('id')} has executions in not success status, Stopping pipeline...")
+                if node.get('id', None) not in list(previous_nodes.keys()):
+                    continue
+                node_id_to_check = node.get('id')
+                result, execution = None, None
+                for attempt in range(POLL_MAX_RETRIES + 1):
+                    result, execution = self.get_node_executions_status(
+                        node_id=node_id_to_check,
+                        pipeline_execution_id=pipeline_execution_id
+                    )
+                    if result != 'pending':
                         break
+                    if attempt < POLL_MAX_RETRIES:
+                        logger.info(
+                            f"Node {node_id_to_check} has non-final execution status, "
+                            f"polling in {POLL_INTERVAL_SEC}s (attempt {attempt + 1}/{POLL_MAX_RETRIES + 1})"
+                        )
+                        time.sleep(POLL_INTERVAL_SEC)
+                if result is True:
+                    logger.info(f"Node {node_id_to_check} has all executions in success status, Checking next node...")
+                    continue
+                elif result == 'pending':
+                    latest_status = 'wait'
+                    logger.info(
+                        f"Node {node_id_to_check} still has non-final execution status after {POLL_MAX_RETRIES + 1} attempts, Stopping pipeline..."
+                    )
+                    break
+                else:
+                    latest_status = 'wait'
+                    if execution is not None:
+                        logger.info(f"Node {node_id_to_check} has failed execution: {execution.id}, Stopping pipeline...")
+                        logger.info(f"Execution details: {execution.to_json()}, execution Output: {execution.output}")
+                    else:
+                        logger.info(f"Node {node_id_to_check} has executions in not success status, Stopping pipeline...")
+                    break
+            else:
+                latest_status = 'continue'
 
-            self.cycle_status_dict[f"{pipeline_execution_id}_{node_id}"] = latest_status
+            with self._state_lock:
+                self.cycle_status_dict[f"{pipeline_execution_id}_{node_id}"] = latest_status
             logger.info(f'Latest status set to: {latest_status}, cycle status for {pipeline_execution_id}_{node_id}: {cycle_status}')
         else:
             latest_status = 'wait'
