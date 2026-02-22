@@ -42,7 +42,6 @@ class ServiceRunner(dl.BaseServiceRunner):
         Waits for the cycle to complete based on the status of previous nodes in the pipeline execution.
         """
         # NOTE: Wait for system execution statuses to update
-        time.sleep(10)
         node_context = context.node
         return_parent = node_context.metadata.get('customNodeConfig', dict()).get('returnParent', False)
         if return_parent is True:
