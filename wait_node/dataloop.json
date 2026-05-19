@@ -101,7 +101,7 @@
         "moduleName": "wait-node",
         "runtime": {
           "podType": "regular-xs",
-          "runnerImage": "dataloopai/dtlpy-agent:cpu.py3.8.opencv4.7",
+          "runnerImage": "dataloopai/dtlpy-agent:cpu.py3.10.opencv",
           "concurrency": 30,
           "autoscaler": {
             "minReplicas": 0,
