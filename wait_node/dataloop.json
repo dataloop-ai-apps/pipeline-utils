@@ -6,8 +6,8 @@
   "description": "Wait node until all previous executions in pipeline cycle are done.",
   "attributes": {
     "Category": "Application",
-    "Provider": "Dataloop",
-    "Deployed By": "Dataloop",
+    "Provider": "DDOE",
+    "Deployed By": "DDOE",
     "License": "MIT",
     "Application Type": "Pipeline Node",
     "Media Type": [

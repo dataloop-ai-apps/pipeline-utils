@@ -6,8 +6,8 @@
     "description": "An application for converting CSV to Json items. Includes a trigger for when a CSV item is uploaded to a dataset in the project.",
     "attributes": {
       "Category": "Application",
-      "Provider": "Dataloop",
-      "Deployed By": "Dataloop",
+      "Provider": "DDOE",
+      "Deployed By": "DDOE",
       "License": "Apache 2.0",
       "Application Type": [
         "Pipeline Node"
