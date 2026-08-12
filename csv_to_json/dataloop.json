@@ -28,7 +28,7 @@
           "moduleName": "csv_to_json_v2",
           "runtime": {
             "podType": "regular-xs",
-            "runnerImage": "hub.dataloop.ai/dtlpy-runner-images/cpu:python3.12_opencv",
+            "runnerImage": "hub.dataloop.ai/dtlpy-runner-images/cpu:python3.14_full",
             "concurrency": 10,
             "autoscaler": {
               "minReplicas": 0,
